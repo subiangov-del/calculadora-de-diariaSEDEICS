@@ -221,8 +221,9 @@
             atualizarPreview();
         }
         
-        function calcularValoresInternacionais() {
+        async function calcularValoresInternacionais() {
             if (!document.getElementById('grupo-internacional')) return; 
+            await fetchHoraAtual(); 
             const g = document.getElementById('grupo-internacional').value, pg = document.getElementById('pais-grupo').value;
             const d = parseInt(document.getElementById('diarias-completas-int').value) || 0;
             const t = parseInt(document.getElementById('translados-int').value) || 0;
@@ -240,6 +241,7 @@
             document.getElementById('qtd-translado-int').textContent = t;
             document.getElementById('total-translado-int-tbl').textContent = f(tT_BRL, 'R$ ');
             document.getElementById('total-geral-int-tbl').textContent = f(tG_BRL, 'R$ ');
+            document.getElementById('timestamp-int').textContent = timestampCalculo;
             atualizarPreview();
         }
 
@@ -295,17 +297,13 @@
             }
         }
         
-        async function gerarPDF() {
-            await fetchHoraAtual();
-            atualizarPreview();
+        function gerarPDF() {
             const element = document.getElementById('preview-to-export');
             const viajanteNome = document.getElementById('viajante-nome').value || 'relatorio';
-            const opt = { margin: 15, filename: `Calculo_Diaria_${viajanteNome.replace(/ /g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { useCORS: true, width: element.scrollWidth, windowWidth: element.scrollWidth }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            const opt = { margin: 15, filename: `Calculo_Diaria_${viajanteNome.replace(/ /g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
             html2pdf().from(element).set(opt).save();
         }
-        async function gerarTXT() {
-            await fetchHoraAtual();
-            atualizarPreview();
+        function gerarTXT() {
             const element = document.getElementById('preview-to-export');
             const viajanteNome = document.getElementById('viajante-nome').value || 'relatorio';
             let textContent = `RELATÓRIO DE CÁLCULO DE DIÁRIA\n====================================\n\n`;
@@ -344,7 +342,7 @@
                                 <option value="Demais">Demais Capitais e Cidades com mais de 200.000 habitantes</option>
                                 <option value="Outras">Outras Cidades</option>
                             </select>
-                            <span class="help-text">Para capitais não listadas, use a opção acima.</span>
+                            <span class="help-text">Para capitais não listadas, use "Demais Capitais e Cidades".</span>
                         </div>
                         <div class="form-group"><label for="diarias">Diárias (Alimentação)</label><input type="number" id="diarias" min="0" value="0"></div>
                         <div class="form-group"><label for="pernoites">Pernoites (Pousada)</label><input type="number" id="pernoites" min="0" value="0"></div>
@@ -382,12 +380,12 @@
                         <table>
                             <thead><tr><th>Descrição</th><th>Valor Unitário</th><th>Quantidade</th><th>Total (BRL)</th></tr></thead>
                             <tbody>
-                                <tr><td>Diária Completa</td><td id="val-diaria-usd">$ 0,00</td><td id="qtd-diaria-int">0</td><td id="total-diaria-int-brl">R$ 0,00</td></tr>
+                                <tr><td>Diária Completa</td><td id="val-diaria-usd">$ 0.00</td><td id="qtd-diaria-int">0</td><td id="total-diaria-int-brl">R$ 0,00</td></tr>
                                 <tr><td>Translado</td><td id="val-translado-int">R$ 44,90</td><td id="qtd-translado-int">0</td><td id="total-translado-int-tbl">R$ 0,00</td></tr>
                                 <tr class="total-row"><td colspan="3"><strong>Total Geral (BRL):</strong></td><td id="total-geral-int-tbl">R$ 0,00</td></tr>
                             </tbody>
                         </table>
-                        <p style="font-size:12px; text-align:right; color: #6c757d; margin-top:10px;">Cálculo atualizado em: <span id="timestamp-int">--</span></p>
+                        <p style="font-size:12px; text-align:right; color: #6c757d; margin-top:10px;">Cálculo realizado em: <span id="timestamp-int">--</span></p>
                     </div>
                 </div>`;
             ['grupo-internacional', 'pais-grupo', 'diarias-completas-int', 'translados-int'].forEach(id => document.getElementById(id).addEventListener('input', calcularValoresInternacionais));
@@ -445,4 +443,3 @@
     </script>
 </body>
 </html>
-
