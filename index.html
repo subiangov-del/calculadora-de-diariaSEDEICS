@@ -58,7 +58,7 @@
         .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--cinza-escuro); }
         .paises-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
         .paises-group h4 { font-size: 16px; color: var(--azul-medio); margin-bottom: 10px; border-bottom: 2px solid var(--azul-claro); padding-bottom: 5px; }
-        .paises-list { font-size: 13px; color: #555; column-count: 1; }
+        .paises-list span { display: block; margin-bottom: 4px; font-size: 13px; color: #555; }
         .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--azul-claro); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         .action-button { color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: 600; cursor: pointer; }
         .action-button i { margin-right: 8px; }
@@ -223,7 +223,7 @@
         
         async function calcularValoresInternacionais() {
             if (!document.getElementById('grupo-internacional')) return; 
-            await fetchHoraAtual(); 
+            fetchHoraAtual(); 
             const g = document.getElementById('grupo-internacional').value, pg = document.getElementById('pais-grupo').value;
             const d = parseInt(document.getElementById('diarias-completas-int').value) || 0;
             const t = parseInt(document.getElementById('translados-int').value) || 0;
@@ -393,11 +393,14 @@
         function renderizarModalPaises() {
             let html = `<div class="modal-overlay" id="paises-modal"><div class="modal-container">
                 <div class="modal-header"><h2>Grupos de Países</h2><button type="button" class="modal-close-btn">&times;</button></div>
-                <div class="modal-body paises-grid">
-                    <div class="paises-group"><h4>Grupo A</h4><div class="paises-list">Afeganistão, Armênia, Bangladesh, Belarus, Bolívia, Benin, Burkina-Fasso, Butão, Comores, República Popular Democrática da Coréia, Costa Rica, El Salvador, Equador, Eslovênia, Filipinas, Gâmbia, Guiana, Guiné Bissau, Guiné, Honduras, Indonésia, Irã, Iraque, Laos, Líbano, Malásia, Maldivas, Marrocos, Mongólia, Myanmar, Namíbia, Nauru, Nepal, Nicarágua, Panamá, Paraguai, Rep. Centro Africana, República Togolesa, Salomão, Samoa, Seychelles, Serra Leoa, Síria, Somália, Sri Lanka, Suazilândia, Suriname, Tadjiquistão, Tailândia, Timor Leste, Tonga, Tunísia, Turcomenistão, Turquia, Tuvalu, Vanuatu, Vietnã, Zimbábue.</div></div>
-                    <div class="paises-group"><h4>Grupo B</h4><div class="paises-list">África do Sul, Albânia, Andorra, Argélia, Austrália, Barbados, Belize, Bósnia-Herzegovina, Burundi, Cabo Verde, Camarões, Camboja, Chade, Chipre, Colômbia, Dominica, Egito, Eritréia, Etiópia, Gana, Geórgia, Granada, Guiné-Equatorial, Haiti, Hungria, lêmen, Ilhas Marshall, Índia, Kiribati, Kuwait, Lesoto, Líbia, Macedônia, Madagascar, Malauí, Micronésia, Moçambique, Moldávia, Níger, Nigéria, Nova Zelândia, Palau, Papua Nova Guiné, Paquistão, Polônia, Quênia, República Dominicana, República Eslovaca, Romênia, Ruanda, São Tomé e Príncipe, Senegal, Sudão, Tanzânia, Uruguai, Uzbequistão, Venezuela.</div></div>
-                    <div class="paises-group"><h4>Grupo C</h4><div class="paises-list">Antígua e Barbuda, Arábia Saudita, Argentina, Azerbaijão, Bahamas, Bahrein, Brunei Darussalam, Botswana, Bulgária, Canadá, Chile, Cingapura, Congo, Costa do Marfim, Cuba, Djibuti, Fiji, Gabão, Guatemala, Jamaica, Jordânia, Letônia, Libéria, Lituânia, Mali, Malta, Maurício, Mauritânia, México, Peru, República Democrática do Congo, República Tcheca, Rússia, San Marino, Santa Lúcia, São Cristóvão e Névis, São Vicente e Granadinas, Taiwan, Trinidad e Tobago, Ucrânia, Uganda, Zâmbia.</div></div>
-                    <div class="paises-group"><h4>Grupo D</h4><div class="paises-list">Alemanha, Angola, Áustria, Bélgica, Catar, Cazaquistão, China, Coréia do Sul, Croácia, Dinamarca, Emirados Árabes, Espanha, Estados Unidos da América, Estônia, Finlândia, França, Grécia, Hong Kong, Irlanda, Islândia, Israel, Itália, Japão, Liechtenstein, Luxemburgo, Mônaco, Montenegro, Noruega, Omã, Países Baixos, Portugal, Reino Unido, República Quirguiz, Sérvia, Suécia, Suíça.</div></div>
+                <div class="modal-body">
+                    <input type="search" id="search-paises" placeholder="Pesquisar país..." style="margin-bottom: 20px;">
+                    <div class="paises-grid">
+                        <div class="paises-group"><h4>Grupo A</h4><div class="paises-list"><span>Afeganistão</span><span>Armênia</span><span>Bangladesh</span><span>Belarus</span><span>Bolívia</span><span>Benin</span><span>Burkina-Fasso</span><span>Butão</span><span>Comores</span><span>República Popular Democrática da Coréia</span><span>Costa Rica</span><span>El Salvador</span><span>Equador</span><span>Eslovênia</span><span>Filipinas</span><span>Gâmbia</span><span>Guiana</span><span>Guiné Bissau</span><span>Guiné</span><span>Honduras</span><span>Indonésia</span><span>Irã</span><span>Iraque</span><span>Laos</span><span>Líbano</span><span>Malásia</span><span>Maldivas</span><span>Marrocos</span><span>Mongólia</span><span>Myanmar</span><span>Namíbia</span><span>Nauru</span><span>Nepal</span><span>Nicarágua</span><span>Panamá</span><span>Paraguai</span><span>Rep. Centro Africana</span><span>República Togolesa</span><span>Salomão</span><span>Samoa</span><span>Seychelles</span><span>Serra Leoa</span><span>Síria</span><span>Somália</span><span>Sri Lanka</span><span>Suazilândia</span><span>Suriname</span><span>Tadjiquistão</span><span>Tailândia</span><span>Timor Leste</span><span>Tonga</span><span>Tunísia</span><span>Turcomenistão</span><span>Turquia</span><span>Tuvalu</span><span>Vanuatu</span><span>Vietnã</span><span>Zimbábue</span></div></div>
+                        <div class="paises-group"><h4>Grupo B</h4><div class="paises-list"><span>África do Sul</span><span>Albânia</span><span>Andorra</span><span>Argélia</span><span>Austrália</span><span>Barbados</span><span>Belize</span><span>Bósnia-Herzegovina</span><span>Burundi</span><span>Cabo Verde</span><span>Camarões</span><span>Camboja</span><span>Chade</span><span>Chipre</span><span>Colômbia</span><span>Dominica</span><span>Egito</span><span>Eritréia</span><span>Etiópia</span><span>Gana</span><span>Geórgia</span><span>Granada</span><span>Guiné-Equatorial</span><span>Haiti</span><span>Hungria</span><span>lêmen</span><span>Ilhas Marshall</span><span>Índia</span><span>Kiribati</span><span>Kuwait</span><span>Lesoto</span><span>Líbia</span><span>Macedônia</span><span>Madagascar</span><span>Malauí</span><span>Micronésia</span><span>Moçambique</span><span>Moldávia</span><span>Níger</span><span>Nigéria</span><span>Nova Zelândia</span><span>Palau</span><span>Papua Nova Guiné</span><span>Paquistão</span><span>Polônia</span><span>Quênia</span><span>República Dominicana</span><span>República Eslovaca</span><span>Romênia</span><span>Ruanda</span><span>São Tomé e Príncipe</span><span>Senegal</span><span>Sudão</span><span>Tanzânia</span><span>Uruguai</span><span>Uzbequistão</span><span>Venezuela</span></div></div>
+                        <div class="paises-group"><h4>Grupo C</h4><div class="paises-list"><span>Antígua e Barbuda</span><span>Arábia Saudita</span><span>Argentina</span><span>Azerbaijão</span><span>Bahamas</span><span>Bahrein</span><span>Brunei Darussalam</span><span>Botswana</span><span>Bulgária</span><span>Canadá</span><span>Chile</span><span>Cingapura</span><span>Congo</span><span>Costa do Marfim</span><span>Cuba</span><span>Djibuti</span><span>Fiji</span><span>Gabão</span><span>Guatemala</span><span>Jamaica</span><span>Jordânia</span><span>Letônia</span><span>Libéria</span><span>Lituânia</span><span>Mali</span><span>Malta</span><span>Maurício</span><span>Mauritânia</span><span>México</span><span>Peru</span><span>República Democrática do Congo</span><span>República Tcheca</span><span>Rússia</span><span>San Marino</span><span>Santa Lúcia</span><span>São Cristóvão e Névis</span><span>São Vicente e Granadinas</span><span>Taiwan</span><span>Trinidad e Tobago</span><span>Ucrânia</span><span>Uganda</span><span>Zâmbia</span></div></div>
+                        <div class="paises-group"><h4>Grupo D</h4><div class="paises-list"><span>Alemanha</span><span>Angola</span><span>Áustria</span><span>Bélgica</span><span>Catar</span><span>Cazaquistão</span><span>China</span><span>Coréia do Sul</span><span>Croácia</span><span>Dinamarca</span><span>Emirados Árabes</span><span>Espanha</span><span>Estados Unidos da América</span><span>Estônia</span><span>Finlândia</span><span>França</span><span>Grécia</span><span>Hong Kong</span><span>Irlanda</span><span>Islândia</span><span>Israel</span><span>Itália</span><span>Japão</span><span>Liechtenstein</span><span>Luxemburgo</span><span>Mônaco</span><span>Montenegro</span><span>Noruega</span><span>Omã</span><span>Países Baixos</span><span>Portugal</span><span>Reino Unido</span><span>República Quirguiz</span><span>Sérvia</span><span>Suécia</span><span>Suíça</span></div></div>
+                    </div>
                 </div>
             </div></div>`;
             document.getElementById('paises-modal-container').innerHTML = html;
@@ -417,6 +420,19 @@
                 btn.style.backgroundColor = 'var(--cinza-escuro)';
             }
             atualizarPreview();
+        }
+
+        function filtrarPaises() {
+            const termo = document.getElementById('search-paises').value.toLowerCase();
+            const paises = document.querySelectorAll('.paises-list span');
+            paises.forEach(pais => {
+                const nomePais = pais.textContent.toLowerCase();
+                if (nomePais.includes(termo)) {
+                    pais.style.display = 'block';
+                } else {
+                    pais.style.display = 'none';
+                }
+            });
         }
 
         window.onload = async function() {
@@ -439,6 +455,7 @@
             const paisesModal = document.getElementById('paises-modal');
             document.getElementById('paises-info-btn').addEventListener('click', () => paisesModal.classList.add('active'));
             paisesModal.querySelector('.modal-close-btn').addEventListener('click', () => paisesModal.classList.remove('active'));
+            document.getElementById('search-paises').addEventListener('keyup', filtrarPaises);
         };
     </script>
 </body>
