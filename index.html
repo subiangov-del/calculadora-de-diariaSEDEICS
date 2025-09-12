@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Diária | SEDEICS RJ</title>
+    <title>Calculadora de Diária | SEDEICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -138,22 +138,21 @@
                     </div>
                 </div>
                 <div class="actions-container">
-                    <button class="action-button" onclick="gerarPDF()" style="background-color: var(--vermelho);"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
-                    <button class="action-button" onclick="imprimirPreview()" style="background-color: var(--azul-claro); margin-left:10px;"><i class="fas fa-print"></i> Imprimir</button>
+                    <button class="action-button" onclick="imprimirPreview()" style="background-color: var(--azul-claro);"><i class="fas fa-print"></i> Imprimir / Salvar PDF</button>
                     <button class="action-button" onclick="gerarTXT()" style="background-color: var(--laranja); margin-left:10px;"><i class="fas fa-file-alt"></i> Gerar TXT</button>
                 </div>
             </div>
         </div>
     </div>
+    
     <footer>
         Desenvolvido por: Gabriel Felizardo da Silva
     </footer>
+
     <div id="paises-modal-container"></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwaqI-FnI29vTMwYXxQeTViw1F-YPsl4yo1C9_9tAJDYkjuCy-dbQ_Z425ceJvdoJ8uwg/exec";
-        const API_KEY = "subics2025";
-        
         let dolarRate = 5.50;
         let valoresNacionais = {}, valoresInternacionais = {}, configValores = {};
         let timestampCalculo = '';
@@ -207,23 +206,23 @@
             const vT = configValores.translado_nacional || 44.00;
             if (g && c && valoresNacionais[c] && valoresNacionais[c][g]) { vA = valoresNacionais[c][g].alimentacao; vP = valoresNacionais[c][g].pousada; }
             const tA = d * vA, tP = p * vP, tT = t * vT, tG = tA + tP + tT;
-            const f = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const f = (n, c = '') => `${c}${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('qtd-alimentacao').textContent = d;
             document.getElementById('qtd-pousada').textContent = p;
             document.getElementById('qtd-translado').textContent = t;
-            document.getElementById('val-alimentacao').textContent = f(vA);
-            document.getElementById('val-pousada').textContent = f(vP);
-            document.getElementById('val-translado').textContent = f(vT);
-            document.getElementById('total-alimentacao').textContent = f(tA);
-            document.getElementById('total-pousada').textContent = f(tP);
-            document.getElementById('total-translado').textContent = f(tT);
-            document.getElementById('total-geral').textContent = f(tG);
+            document.getElementById('val-alimentacao').textContent = f(vA, 'R$ ');
+            document.getElementById('val-pousada').textContent = f(vP, 'R$ ');
+            document.getElementById('val-translado').textContent = f(vT, 'R$ ');
+            document.getElementById('total-alimentacao').textContent = f(tA, 'R$ ');
+            document.getElementById('total-pousada').textContent = f(tP, 'R$ ');
+            document.getElementById('total-translado').textContent = f(tT, 'R$ ');
+            document.getElementById('total-geral').textContent = f(tG, 'R$ ');
             atualizarPreview();
         }
         
         async function calcularValoresInternacionais() {
             if (!document.getElementById('grupo-internacional')) return; 
-            fetchHoraAtual(); 
+            await fetchHoraAtual(); 
             const g = document.getElementById('grupo-internacional').value, pg = document.getElementById('pais-grupo').value;
             const d = parseInt(document.getElementById('diarias-completas-int').value) || 0;
             const t = parseInt(document.getElementById('translados-int').value) || 0;
@@ -278,10 +277,10 @@
                 const cidadeSelect = document.getElementById('cidade');
                 document.getElementById('preview-grupo').textContent = grupoSelect.value ? grupoSelect.options[grupoSelect.selectedIndex].text : '...';
                 document.getElementById('preview-localidade').textContent = cidadeSelect.value ? cidadeSelect.options[cidadeSelect.selectedIndex].text : '...';
-                document.getElementById('preview-total-alimentacao').textContent = 'R$ ' + document.getElementById('total-alimentacao').textContent;
-                document.getElementById('preview-total-pousada').textContent = 'R$ ' + document.getElementById('total-pousada').textContent;
-                document.getElementById('preview-total-translado').textContent = 'R$ ' + document.getElementById('total-translado').textContent;
-                document.getElementById('preview-total-geral').textContent = 'R$ ' + document.getElementById('total-geral').textContent;
+                document.getElementById('preview-total-alimentacao').textContent = document.getElementById('total-alimentacao').textContent;
+                document.getElementById('preview-total-pousada').textContent = document.getElementById('total-pousada').textContent;
+                document.getElementById('preview-total-translado').textContent = document.getElementById('total-translado').textContent;
+                document.getElementById('preview-total-geral').textContent = document.getElementById('total-geral').textContent;
             } else {
                 if(!document.getElementById('grupo-internacional')) return;
                 document.getElementById('preview-tipo-viagem').textContent = 'Internacional';
@@ -297,12 +296,6 @@
             }
         }
         
-        function gerarPDF() {
-            const element = document.getElementById('preview-to-export');
-            const viajanteNome = document.getElementById('viajante-nome').value || 'relatorio';
-            const opt = { margin: 15, filename: `Calculo_Diaria_${viajanteNome.replace(/ /g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
-            html2pdf().from(element).set(opt).save();
-        }
         function gerarTXT() {
             const element = document.getElementById('preview-to-export');
             const viajanteNome = document.getElementById('viajante-nome').value || 'relatorio';
@@ -460,4 +453,3 @@
     </script>
 </body>
 </html>
-
