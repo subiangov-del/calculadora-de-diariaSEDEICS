@@ -1794,7 +1794,6 @@
   const API_URL = "https://script.google.com/macros/s/AKfycbwaqI-FnI29vTMwYXxQeTViw1F-YPsl4yo1C9_9tAJDYkjuCy-dbQ_Z425ceJvdoJ8uwg/exec";
   let dolarRate = 5.50;
   let valoresNacionais = {}, valoresInternacionais = {}, configValores = {};
-  let timestampCalculo = '';
   let tabAtual = 'nac';
 
   /* ── UTILS ──────────────────────────────────────────────────────────── */
@@ -2069,9 +2068,8 @@
     atualizarPreview();
   }
 
-  /* ── CÁLCULO INTERNACIONAL ──────────────────────────────────────────── */
-  async function calcularInternacional() {
-    await buscarTimestamp();
+  /* ── CÁLCULO INTERNACIONAL ──────────────────────────── */
+  function calcularInternacional() {
     const grupo  = document.getElementById('grupo-int').value;
     const pais   = document.getElementById('pais-grupo-int').value;
     const diarias= +document.getElementById('diarias-int').value   || 0;
@@ -2100,7 +2098,7 @@
     document.getElementById('qtd-trans-int').textContent  = trans;
     document.getElementById('tot-trans-int').textContent  = fmtBRL(tTrans);
     document.getElementById('total-geral-int').textContent= fmtBRL(tDiaria+tTrans);
-    document.getElementById('timestamp-int').textContent  = timestampCalculo;
+    document.getElementById('timestamp-int').textContent  = new Date().toLocaleString('pt-BR');
     atualizarPreview();
   }
 
@@ -2108,8 +2106,10 @@
     try {
       const r = await fetch('https://worldtimeapi.org/api/ip');
       const d = await r.json();
-      timestampCalculo = new Date(d.datetime).toLocaleString('pt-BR');
-    } catch { timestampCalculo = new Date().toLocaleString('pt-BR')+' (local)'; }
+      return new Date(d.datetime).toLocaleString('pt-BR');
+    } catch {
+      return new Date().toLocaleString('pt-BR');
+    }
   }
 
   /* ── PREVIEW ────────────────────────────────────────────────────────── */
@@ -2152,7 +2152,7 @@
       const fonteOpts = { awesomeapi:'AwesomeAPI', bcb:'Banco Central do Brasil', manual:'Valor manual' };
       const fonteKey  = document.getElementById('fonte-cotacao').value;
       document.getElementById('prev-fonte').textContent = fonteOpts[fonteKey] || fonteKey;
-      document.getElementById('prev-data').textContent=timestampCalculo||'—';
+      document.getElementById('prev-data').textContent = new Date().toLocaleString('pt-BR');
       document.getElementById('lbl-alim').style.display='none';
       document.getElementById('prev-alim').style.display='none';
       document.getElementById('lbl-pous').style.display='none';
@@ -2266,10 +2266,14 @@
   }
 
   /* ── COLETAR DADOS RICOS PARA EXPORTAÇÃO ───────────────────────────── */
-  function coletarDadosRelatorio() {
+  async function coletarDadosRelatorio() {
     const isNac  = tabAtual === 'nac';
     const modoBuscaCidade = document.getElementById('dest-busca-block')?.style.display !== 'none';
     const modoBuscaPais   = document.getElementById('pais-busca-block')?.style.display  !== 'none';
+
+    // Busca timestamp apenas no momento da exportação
+    let timestampExport = new Date().toLocaleString('pt-BR');
+    if (!isNac) timestampExport = await buscarTimestamp();
 
     // Localidade
     let localidade;
@@ -2332,7 +2336,7 @@
       if (datas.length) translados = datas.join(', ') + ` (${datas.length} translado${datas.length!=1?'s':''})`;
     }
 
-    return { isNac, localidade, periodoAlim, periodoPern, periodoInt, translados };
+    return { isNac, localidade, periodoAlim, periodoPern, periodoInt, translados, timestampExport };
   }
 
   function fmtDataBR(iso) {
@@ -2342,9 +2346,9 @@
   }
 
   /* ── EXPORT TXT ─────────────────────────────────────────────────────── */
-  function gerarTXT() {
+  async function gerarTXT() {
     const nome = document.getElementById('viajante-nome').value || 'relatorio';
-    const d    = coletarDadosRelatorio();
+    const d    = await coletarDadosRelatorio();
     const linhas = [
       'RELATÓRIO DE CÁLCULO DE DIÁRIA',
       'SEDEICS — Secretaria de Desenvolvimento Econômico, Indústria, Comércio e Serviços',
@@ -2367,7 +2371,7 @@
     if (document.getElementById('lbl-cotacao').style.display !== 'none') {
       linhas.push(`Cotação USD: ${document.getElementById('prev-cotacao').textContent}`);
       linhas.push(`Fonte: ${document.getElementById('prev-fonte').textContent}`);
-      linhas.push(`Data do Cálculo: ${document.getElementById('prev-data').textContent}`);
+      linhas.push(`Data do Cálculo: ${d.timestampExport}`);
     }
     linhas.push('');
 
@@ -2396,10 +2400,10 @@
   }
 
   /* ── EXPORT PDF ─────────────────────────────────────────────────────── */
-  function gerarPDF() {
+  async function gerarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const d   = coletarDadosRelatorio();
+    const d   = await coletarDadosRelatorio();
 
     // Header
     doc.setFillColor(30,58,138);
@@ -2413,14 +2417,24 @@
 
     doc.setTextColor(0,0,0); doc.setFontSize(10);
     let y = 50;
+    const FOOTER_MARGIN = 30; // reserva para o footer
     const row = (label, val) => {
+      const linhas = doc.splitTextToSize(String(val), 115);
+      const needed = 6 * linhas.length;
+      // nova página se não couber
+      if (y + needed > doc.internal.pageSize.height - FOOTER_MARGIN) {
+        doc.addPage();
+        y = 20;
+      }
       doc.setFont(undefined,'bold'); doc.text(`${label}:`, 20, y);
       doc.setFont(undefined,'normal');
-      const linhas = doc.splitTextToSize(String(val), 115);
       doc.text(linhas, 80, y);
-      y += 6 * linhas.length;
+      y += needed;
     };
     const sec = (title) => {
+      if (y + 14 > doc.internal.pageSize.height - FOOTER_MARGIN) {
+        doc.addPage(); y = 20;
+      }
       y += 4; doc.setFont(undefined,'bold'); doc.setFontSize(11);
       doc.text(title.toUpperCase(), 20, y); y += 7; doc.setFontSize(10);
     };
@@ -2440,7 +2454,7 @@
     if (document.getElementById('lbl-cotacao').style.display !== 'none') {
       row('Cotação USD', document.getElementById('prev-cotacao').textContent);
       row('Fonte',       document.getElementById('prev-fonte').textContent);
-      row('Data',        document.getElementById('prev-data').textContent);
+      row('Data',        d.timestampExport);
     }
 
     sec('Detalhamento');
@@ -2456,20 +2470,26 @@
     const transLabel = document.getElementById('prev-trans').textContent;
     row('Translado', d.translados ? `${transLabel} - ${d.translados}` : transLabel);
 
-    y += 6; doc.setLineWidth(.5); doc.line(15, y, 195, y); y += 8;
+    y += 6;
+    if (y + 20 > doc.internal.pageSize.height - FOOTER_MARGIN) { doc.addPage(); y = 20; }
+    doc.setLineWidth(.5); doc.line(15, y, 195, y); y += 8;
     doc.setFont(undefined,'bold'); doc.setFontSize(14);
     doc.text(`TOTAL GERAL: ${document.getElementById('prev-total').textContent}`, 20, y);
 
-    // Footer
-    const pageH = doc.internal.pageSize.height;
-    doc.setFillColor(30,58,138);
-    doc.rect(0, pageH - 20, 210, 20, 'F');
-    doc.setFontSize(7); doc.setFont(undefined,'normal');
-    doc.setTextColor(255,255,255);
-    doc.text('Secretaria de Desenvolvimento Econômico, Indústria, Comércio e Serviços — SEDEICS', 14, pageH - 12);
-    doc.text('Gerado em: ' + new Date().toLocaleString('pt-BR'), 196, pageH - 12, {align:'right'});
-    doc.setDrawColor(255,255,255); doc.setLineWidth(0.3);
-    doc.line(14, pageH - 20, 196, pageH - 20);
+    // Footer em todas as páginas
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      const pageH = doc.internal.pageSize.height;
+      doc.setFillColor(30,58,138);
+      doc.rect(0, pageH - 20, 210, 20, 'F');
+      doc.setFontSize(7); doc.setFont(undefined,'normal');
+      doc.setTextColor(255,255,255);
+      doc.text('Secretaria de Desenvolvimento Econômico, Indústria, Comércio e Serviços — SEDEICS', 14, pageH - 12);
+      doc.text('Gerado em: ' + new Date().toLocaleString('pt-BR'), 196, pageH - 12, {align:'right'});
+      doc.setDrawColor(255,255,255); doc.setLineWidth(0.3);
+      doc.line(14, pageH - 20, 196, pageH - 20);
+    }
 
     const nome = document.getElementById('viajante-nome').value || 'Relatorio';
     doc.save(`Diaria_${nome.replace(/ /g,'_')}.pdf`);
@@ -2654,11 +2674,16 @@
     btnDatas.classList.toggle('active', !isManual);
 
     if (isManual) {
-      // restore input to 0 when switching back
+      // ao voltar pro manual, zera o input e re-sincroniza pernoite
       const inp = document.getElementById(modeMap[field].inputId);
-      if (inp) inp.dispatchEvent(new Event('input'));
+      if (inp) {
+        inp.value = 0;
+        inp.dispatchEvent(new Event('input'));
+      }
+      // se saindo do modo datas da alimentação, re-aplica auto-regras
+      if (field === 'alim') aplicarAutoRegras();
     } else {
-      calcDatas(field); // recalc with current dates
+      calcDatas(field);
     }
   }
 
@@ -3060,18 +3085,19 @@
     await atualizarDolar();
     setInterval(atualizarDolar, 2*60*1000);
 
-    ['grupo-nac','cidade-nac','diarias-nac','pernoites-nac','translados-nac'].forEach(id=>
+    ['grupo-nac','cidade-nac','pernoites-nac','translados-nac'].forEach(id=>
       document.getElementById(id).addEventListener('input', calcularNacional));
 
-    // Auto-regras: quando diárias mudam no modo busca, pernoite e translado se ajustam
+    // diarias-nac: dispara auto-regras + calculo (listener único)
     document.getElementById('diarias-nac').addEventListener('input', () => {
       aplicarAutoRegras();
       calcularNacional();
     });
-    ['grupo-int','pais-grupo-int','diarias-int','translados-int'].forEach(id=>
+
+    ['grupo-int','pais-grupo-int','translados-int'].forEach(id=>
       document.getElementById(id).addEventListener('input', calcularInternacional));
 
-    // Auto-translado internacional: dispara quando diárias mudam
+    // diarias-int: listener único
     document.getElementById('diarias-int').addEventListener('input', calcularInternacional);
     ['calculador-nome','viajante-nome','viajante-id','viajante-banco','viajante-agencia','viajante-conta'].forEach(id=>
       document.getElementById(id).addEventListener('input', atualizarPreview));
